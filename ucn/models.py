@@ -1,0 +1,84 @@
+import torch
+import torch.nn as nn
+import torch.distributions.multivariate_normal.MultivariateNormal as MultivariateNormal
+
+from .modules import FFN
+
+
+class SMCN(nn.Module):
+
+    """Sequential Monte Carlo Network."""
+
+    def __init__(self, input_size, output_size, n_particles=1):
+        """TODO: to be defined.
+
+        Parameters
+        ----------
+        input_size : TODO
+        output_size : TODO
+        n_particles : TODO, optional
+
+
+        """
+        nn.Module.__init__(self)
+
+        self._input_size = input_size
+        self._output_size = output_size
+        self._n_particles = n_particles
+
+        self._f = FFN(self._input_size, self._output_size)
+        self._g = nn.RNNCell(self._input_size, self._input_size)
+
+        self._sigma_x = torch.diag(torch.abs(torch.randn(self._input_size)))
+        self._sigma_y = torch.diag(torch.abs(torch.randn(self._output_size)))
+
+        self.softmax = nn.Softmax(dim=1)
+
+    def forward(self, u, y=None, noise=False):
+        # N should be 1 if there is no noise
+        assert noise or self.N == 1
+
+        T = u.shape[0]
+        bs = u.shape[1]
+
+        predictions = []
+
+        # Initial hidden state
+        x = torch.randn(bs, self.N, self._input_size)
+
+        # Load noise distribution
+        if noise:
+            eta = MultivariateNormal(torch.zeros(x.shape), self._sigma_x)
+
+        # Iterate k through time
+        for k, u_k in enumerate(u):
+            # Compute hidden state
+            u_k = u_k.repeat_interleave(self.N, dim=0)
+            x = x.view(-1, self._input_size)
+            x = self._g(u_k, x).view(-1, self.N, self._input_size)
+
+            if noise:
+                x += eta.sample()
+
+            # Compute predictions
+            y_hat = self._f(x)
+            predictions.append(y_hat)
+
+            # If target values are provided, compute weights
+            if y is not None:
+                log_pdf = MultivariateNormal(y[k], self._sigma_y).log_prob
+                w = log_pdf(y_hat.transpose(0, 1)).T
+                w = self.softmax(w)
+                I = torch.multinomial(w, self.N, replacement=True)
+                self.resample(x, I)
+
+        return torch.cat(predictions).view(T, -1, self.N, self._output_size)
+
+    def resample(self, x, I):
+        return torch.cat(
+            [x[batch_idx, particule_idx] for batch_idx, particule_idx in enumerate(I)]
+        ).view(-1, self.N, self._input_size)
+
+    @property
+    def N(self):
+        return self._n_particles
