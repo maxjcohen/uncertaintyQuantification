@@ -70,7 +70,7 @@ class SMCN(nn.Module):
                 w = log_pdf(y_hat.transpose(0, 1)).T
                 w = self.softmax(w)
                 I = torch.multinomial(w, self.N, replacement=True)
-                self.resample(x, I)
+                x = self.resample(x, I)
 
         return torch.cat(predictions).view(T, -1, self.N, self._output_size)
 
