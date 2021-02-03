@@ -83,16 +83,17 @@ class SMCN(nn.Module):
                 w = self._normal_y.log_prob(y_hat.transpose(0, 1)).T
                 w = self.softmax(w)
                 I = torch.multinomial(w, self.N, replacement=True)
-                x = self.resample(x, I)
+                x = self.__class__.resample(x, I)
 
                 self._I.append(I)
 
         return torch.cat(predictions).view(T, -1, self.N, self._output_size)
 
-    def resample(self, x, I):
+    @staticmethod
+    def resample(x, I):
         return torch.cat(
             [x[batch_idx, particule_idx] for batch_idx, particule_idx in enumerate(I)]
-        ).view(-1, self.N, self._input_size)
+        ).view(x.shape)
 
     @property
     def N(self):
