@@ -64,7 +64,10 @@ class SMCN(nn.Module):
             x = self._g(u_k, x).view(-1, self.N, self._input_size)
 
             if noise:
-                x += eta.sample((bs,))
+                x += self._eta.sample((bs,))
+            if fisher:
+                particules.append(x)
+                x = x.detach()
 
             # Compute predictions
             y_hat = self._f(x)
