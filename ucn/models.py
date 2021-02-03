@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-import torch.distributions.multivariate_normal.MultivariateNormal as MultivariateNormal
+from torch.distributions.multivariate_normal import MultivariateNormal
 
 from .modules import FFN
 
@@ -32,6 +32,12 @@ class SMCN(nn.Module):
         self._sigma_x = torch.diag(torch.abs(torch.randn(self._input_size)))
         self._sigma_y = torch.diag(torch.abs(torch.randn(self._output_size)))
 
+        # Load noise distribution
+        self._eta = MultivariateNormal(torch.zeros(self.N, self._sigma_x))
+
+        # Load pdf around observation y
+        self._normal_y = MultivariateNormal(torch.zeros(1), self._sigma_y)
+
         self.softmax = nn.Softmax(dim=1)
 
     def forward(self, u, y=None, noise=False):
@@ -46,10 +52,6 @@ class SMCN(nn.Module):
         # Initial hidden state
         x = torch.randn(bs, self.N, self._input_size)
 
-        # Load noise distribution
-        if noise:
-            eta = MultivariateNormal(torch.zeros(x.shape), self._sigma_x)
-
         # Iterate k through time
         for k, u_k in enumerate(u):
             # Compute hidden state
@@ -58,7 +60,7 @@ class SMCN(nn.Module):
             x = self._g(u_k, x).view(-1, self.N, self._input_size)
 
             if noise:
-                x += eta.sample()
+                x += eta.sample((bs,))
 
             # Compute predictions
             y_hat = self._f(x)
@@ -66,8 +68,8 @@ class SMCN(nn.Module):
 
             # If target values are provided, compute weights
             if y is not None:
-                log_pdf = MultivariateNormal(y[k], self._sigma_y).log_prob
-                w = log_pdf(y_hat.transpose(0, 1)).T
+                self._normal_y.loc = y[k]
+                w = self._normal_y.log_pdf(y_hat.transpose(0, 1)).T
                 w = self.softmax(w)
                 I = torch.multinomial(w, self.N, replacement=True)
                 x = self.resample(x, I)
