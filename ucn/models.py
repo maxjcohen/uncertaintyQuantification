@@ -94,6 +94,23 @@ class SMCN(nn.Module):
             [x[batch_idx, particule_idx] for batch_idx, particule_idx in enumerate(I)]
         ).view(x.shape)
 
+    @classmethod
+    def smooth_pms(cls, x, I):
+        T, N = I.shape[0], I.shape[-1]
+
+        # Initialize flat indexing
+        I_flat = torch.zeros(I.shape, dtype=torch.long)
+        I_flat[-1] = torch.arange(N)
+
+        # Fill flat indexing with reversed indexing
+        for k in reversed(range(T - 1)):
+            I_flat[k] = cls.resample(I[k + 1], I_flat[k + 1])
+
+        # Stack all selected particles
+        return torch.stack(
+            [cls.resample(x_i, I_i) for x_i, I_i in zip(x, I_flat)]
+        ).squeeze()
+
     @property
     def N(self):
         return self._n_particles
