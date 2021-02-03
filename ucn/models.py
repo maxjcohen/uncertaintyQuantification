@@ -47,11 +47,13 @@ class SMCN(nn.Module):
     def forward(self, u, y=None, noise=False):
         # N should be 1 if there is no noise
         assert noise or self.N == 1
+        fisher = y is not None
 
         T = u.shape[0]
         bs = u.shape[1]
 
         predictions = []
+        particules = []
 
         # Initial hidden state
         x = torch.randn(bs, self.N, self._input_size)
@@ -73,10 +75,12 @@ class SMCN(nn.Module):
             y_hat = self._f(x)
             predictions.append(y_hat)
 
-            # If target values are provided, compute weights
-            if y is not None:
+            if fisher:
+                y_hat = y_hat.detach()
+
+                # Compute sampling weights
                 self._normal_y.loc = y[k]
-                w = self._normal_y.log_pdf(y_hat.transpose(0, 1)).T
+                w = self._normal_y.log_prob(y_hat.transpose(0, 1)).T
                 w = self.softmax(w)
                 I = torch.multinomial(w, self.N, replacement=True)
                 x = self.resample(x, I)
