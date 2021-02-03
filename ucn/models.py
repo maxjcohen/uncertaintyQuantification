@@ -40,6 +40,8 @@ class SMCN(nn.Module):
         # Load pdf around observation y
         self._normal_y = MultivariateNormal(torch.zeros(1), self._sigma_y)
 
+        self._I = []
+
         self.softmax = nn.Softmax(dim=1)
 
     def forward(self, u, y=None, noise=False):
@@ -76,6 +78,8 @@ class SMCN(nn.Module):
                 I = torch.multinomial(w, self.N, replacement=True)
                 x = self.resample(x, I)
 
+                self._I.append(I)
+
         return torch.cat(predictions).view(T, -1, self.N, self._output_size)
 
     def resample(self, x, I):
@@ -86,3 +90,7 @@ class SMCN(nn.Module):
     @property
     def N(self):
         return self._n_particles
+
+    @property
+    def I(self):
+        return self._I
