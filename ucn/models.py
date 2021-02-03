@@ -40,8 +40,6 @@ class SMCN(nn.Module):
         # Load pdf around observation y
         self._normal_y = MultivariateNormal(torch.zeros(1), self._sigma_y)
 
-        self._I = []
-
         self.softmax = nn.Softmax(dim=1)
 
     def forward(self, u, y=None, noise=False):
@@ -54,6 +52,7 @@ class SMCN(nn.Module):
 
         predictions = []
         particules = []
+        self._I = [torch.arange(self.N).expand(bs, self.N)]
 
         # Initial hidden state
         x = torch.randn(bs, self.N, self._input_size)
@@ -101,4 +100,4 @@ class SMCN(nn.Module):
 
     @property
     def I(self):
-        return self._I
+        return torch.stack(self._I[:-1])
