@@ -33,7 +33,9 @@ class SMCN(nn.Module):
         self._sigma_y = torch.diag(torch.abs(torch.randn(self._output_size)))
 
         # Load noise distribution
-        self._eta = MultivariateNormal(torch.zeros(self.N, self._sigma_x))
+        self._eta = MultivariateNormal(
+            torch.zeros(self.N, self._input_size), self._sigma_x
+        )
 
         # Load pdf around observation y
         self._normal_y = MultivariateNormal(torch.zeros(1), self._sigma_y)
