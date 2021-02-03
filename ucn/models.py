@@ -51,7 +51,7 @@ class SMCN(nn.Module):
         bs = u.shape[1]
 
         predictions = []
-        particules = []
+        self._particules = []
         self._I = [torch.arange(self.N).expand(bs, self.N)]
 
         # Initial hidden state
@@ -67,7 +67,7 @@ class SMCN(nn.Module):
             if noise:
                 x += self._eta.sample((bs,))
             if fisher:
-                particules.append(x)
+                self._particules.append(x)
                 x = x.detach()
 
             # Compute predictions
@@ -101,3 +101,7 @@ class SMCN(nn.Module):
     @property
     def I(self):
         return torch.stack(self._I[:-1])
+
+    @property
+    def particules(self):
+        return torch.stack(self._particules)
