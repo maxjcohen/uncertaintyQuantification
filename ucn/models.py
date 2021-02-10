@@ -65,7 +65,7 @@ class SMCN(nn.Module):
             x = self._g(u_k, x).view(-1, self.N, self._input_size)
 
             if noise:
-                x += self._eta.sample((bs,))
+                x = x + self._eta.sample((bs,))
             if fisher:
                 self._particules.append(x)
                 x = x.detach()
