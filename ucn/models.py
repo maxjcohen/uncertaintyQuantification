@@ -56,10 +56,10 @@ class SMCN(nn.Module):
 
         predictions = []
         self._particules = []
-        self._I = [torch.arange(self.N).expand(bs, self.N)]
+        self._I = [torch.arange(self.N, device=u.device).expand(bs, self.N)]
 
         # Initial hidden state
-        x = torch.randn(bs, self.N, self._input_size)
+        x = torch.randn(bs, self.N, self._input_size, device=u.device)
 
         # Iterate k through time
         for k, u_k in enumerate(u):
