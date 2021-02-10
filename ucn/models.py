@@ -86,7 +86,7 @@ class SMCN(nn.Module):
 
                 self._I.append(I)
 
-        return torch.cat(predictions).view(T, -1, self.N, self._output_size)
+        return torch.stack(predictions)
 
     @staticmethod
     def resample(x, I):
