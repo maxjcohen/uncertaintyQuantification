@@ -79,9 +79,9 @@ class SMCN(nn.Module):
 
                 # Compute sampling weights
                 self._normal_y.loc = y[k]
-                w = self._normal_y.log_prob(y_hat.transpose(0, 1)).T
-                w = self.softmax(w)
-                I = torch.multinomial(w, self.N, replacement=True)
+                self.w = self._normal_y.log_prob(y_hat.transpose(0, 1)).T.detach()
+                self.w = self.softmax(self.w)
+                I = torch.multinomial(self.w, self.N, replacement=True)
                 x = self.__class__.resample(x, I)
 
                 self._I.append(I)
