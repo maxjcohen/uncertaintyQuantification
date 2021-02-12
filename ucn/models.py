@@ -27,7 +27,7 @@ class SMCN(nn.Module):
         self._n_particles = n_particles
 
         self._f = FFN(self._input_size, self._output_size)
-        self._g = nn.RNNCell(self._input_size, self._input_size)
+        self._g = nn.RNNCell(self._input_size, self._input_size, nonlinearity='tanh')
 
         self._sigma_x = nn.Parameter(
             torch.diag(torch.abs(torch.randn(self._input_size))), requires_grad=True
