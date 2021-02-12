@@ -40,6 +40,9 @@ class SMCN(nn.Module):
         self._eta = MultivariateNormal(
             torch.zeros(self.N, self._input_size), self._sigma_x
         )
+        self._eps = MultivariateNormal(
+            torch.zeros(self.N, self._output_size), self._sigma_y
+        )
 
         # Load pdf around observation y
         self._normal_y = MultivariateNormal(torch.zeros(1), self._sigma_y)
@@ -76,6 +79,8 @@ class SMCN(nn.Module):
 
             # Compute predictions
             y_hat = self._f(x)
+            if noise:
+                y_hat = y_hat + self._eps.sample((bs,))
             predictions.append(y_hat)
 
             if fisher:
