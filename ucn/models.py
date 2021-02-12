@@ -30,10 +30,10 @@ class SMCN(nn.Module):
         self._g = nn.RNNCell(self._input_size, self._input_size, nonlinearity='tanh')
 
         self._sigma_x = nn.Parameter(
-            torch.diag(torch.abs(torch.rand(self._input_size))), requires_grad=True
+            torch.diag(torch.rand(self._input_size)), requires_grad=True
         )
         self._sigma_y = nn.Parameter(
-            torch.diag(torch.abs(torch.rand(self._output_size))), requires_grad=True
+            torch.diag(torch.rand(self._output_size)), requires_grad=True
         )
 
         # Load noise distribution
