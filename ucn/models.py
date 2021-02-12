@@ -118,7 +118,7 @@ class SMCN(nn.Module):
         # Stack all selected particles
         return torch.stack(
             [cls.resample(x_i, I_i) for x_i, I_i in zip(x, I_flat)]
-        ).squeeze()
+        )
 
     @property
     def N(self):
