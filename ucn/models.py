@@ -77,8 +77,6 @@ class SMCN(nn.Module):
 
             # Compute predictions
             y_hat = self._f(x)
-            if noise:
-                y_hat = y_hat + self._eps.sample((bs,))
             predictions.append(y_hat)
 
             if fisher:
