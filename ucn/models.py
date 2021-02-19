@@ -116,6 +116,26 @@ class SMCN(nn.Module):
             [cls.resample(x_i, I_i) for x_i, I_i in zip(x, I_flat)]
         )
 
+    def compute_cost(self, u, y):
+        T = y.shape[0]
+
+        # Filter with observations
+        y_hat = self(u, y=y, noise=True)
+
+        # Smooth
+        y_hat = self.smooth_pms(y_hat, self.I)
+        particules = self.smooth_pms(self.particules, self.I)
+
+        # Compute likelihood
+        normal_y = MultivariateNormal(y.unsqueeze(-2), self._sigma_y)
+        loss_y = - normal_y.log_prob(y_hat) * self.w
+
+        normal_x = MultivariateNormal(particules[1:], self._sigma_x)
+        loss_x = - normal_x.log_prob(self._g(particules[:T-1])) * self.w
+
+        # Aggregate terms
+        return loss_x.mean() + loss_y.mean()
+
     @property
     def N(self):
         return self._n_particles

@@ -1,6 +1,5 @@
 import torch
 import torch.nn.functional as F
-from torch.distributions.multivariate_normal import MultivariateNormal
 import pytorch_lightning as pl
 
 
@@ -19,24 +18,8 @@ class SMCNTrainer(pl.LightningModule):
 
         fisher = self._model.N > 1
 
-        T = y.shape[0]
         if fisher:
-            # Filter with observations
-            y_hat = self._model(u, y=y, noise=True)
-
-            # Smooth
-            y_hat = self._model.smooth_pms(y_hat, self._model.I)
-            particules = self._model.smooth_pms(self._model.particules, self._model.I)
-
-            # Compute likelihood
-            normal_y = MultivariateNormal(y.unsqueeze(-2), self._model._sigma_y)
-            loss_y = - normal_y.log_prob(y_hat) * self._model.w
-
-            normal_x = MultivariateNormal(particules[1:], self._model._sigma_x)
-            loss_x = - normal_x.log_prob(particules[:T-1]) * self._model.w
-
-            # Aggregate terms
-            loss = loss_x.mean() + loss_y.mean()
+            loss = self._model.compute_cost(u=u, y=y)
         else:
             y_hat = self._model(u, noise=True)
             loss = F.mse_loss(y.squeeze(), y_hat.squeeze())
