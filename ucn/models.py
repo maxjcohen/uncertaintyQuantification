@@ -27,7 +27,7 @@ class SMCN(nn.Module):
         self._n_particles = n_particles
 
         self._f = FFN(self._input_size, self._output_size)
-        self._g = nn.RNNCell(self._input_size, self._input_size, nonlinearity='tanh')
+        self._g = FFN(self._input_size, self._input_size)
 
         self._sigma_x = nn.Parameter(
             torch.diag(torch.rand(self._input_size)), requires_grad=True
@@ -67,9 +67,7 @@ class SMCN(nn.Module):
         # Iterate k through time
         for k, u_k in enumerate(u):
             # Compute hidden state
-            u_k = u_k.repeat_interleave(self.N, dim=0)
-            x = x.view(-1, self._input_size)
-            x = self._g(u_k, x).view(-1, self.N, self._input_size)
+            x = self._g(x)
 
             if noise:
                 x = x + self._eta.sample((bs,))
