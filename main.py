@@ -4,7 +4,6 @@ from statsmodels.tsa.arima_process import arma_generate_sample
 import torch
 from torch.utils.data import DataLoader
 import pytorch_lightning as pl
-from tqdm import tqdm
 
 from ucn.models import SMCN
 from src.trainer import SMCNTrainer
