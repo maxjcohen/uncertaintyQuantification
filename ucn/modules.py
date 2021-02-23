@@ -23,5 +23,9 @@ class FFN(nn.Module):
         self._linear = nn.Linear(self._input_size, self._ouput_size, bias=False)
         self.activation = nn.Sigmoid()
 
+        # Initialize with positive values only
+        # TODO This is to be removed
+        self._linear.weight.data = self._linear.weight.data.abs()
+
     def forward(self, x):
         return self._linear(x)
