@@ -20,7 +20,7 @@ class FFN(nn.Module):
         self._input_size = input_size
         self._ouput_size = ouput_size
 
-        self._linear = nn.Linear(self._input_size, self._ouput_size)
+        self._linear = nn.Linear(self._input_size, self._ouput_size, bias=False)
         self.activation = nn.ReLU()
 
     def forward(self, x):
