@@ -21,7 +21,7 @@ class FFN(nn.Module):
         self._ouput_size = ouput_size
 
         self._linear = nn.Linear(self._input_size, self._ouput_size, bias=False)
-        self.activation = nn.ReLU()
+        self.activation = nn.Sigmoid()
 
     def forward(self, x):
-        return self.activation(self._linear(x))
+        return self._linear(x)
