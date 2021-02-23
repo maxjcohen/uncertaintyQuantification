@@ -129,11 +129,6 @@ class SMCN(nn.Module):
     def N(self, n):
         self._n_particles = n
 
-        # Load noise distribution
-        self._eta = MultivariateNormal(
-            torch.zeros(self.N, self._input_size), self._sigma_x
-        )
-
     @property
     def I(self):
         return torch.stack(self._I[:-1])
