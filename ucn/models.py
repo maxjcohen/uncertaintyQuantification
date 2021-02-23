@@ -33,7 +33,8 @@ class SMCN(nn.Module):
             torch.cholesky(torch.diag(torch.rand(self._input_size))), requires_grad=True
         )
         self._sigma_y = nn.Parameter(
-            torch.cholesky(torch.diag(torch.rand(self._output_size))), requires_grad=True
+            torch.cholesky(torch.diag(torch.rand(self._output_size))),
+            requires_grad=True,
         )
 
         self.softmax = nn.Softmax(dim=1)
@@ -53,9 +54,7 @@ class SMCN(nn.Module):
         # Initial hidden state
         x = torch.randn(bs, self.N, self._input_size, device=u.device)
 
-        self._eta = MultivariateNormal(
-            torch.zeros(x.shape), scale_tril=self._sigma_x
-        )
+        self._eta = MultivariateNormal(torch.zeros(x.shape), scale_tril=self._sigma_x)
         # Iterate k through time
         for k, u_k in enumerate(u):
             # Compute hidden state
@@ -100,9 +99,7 @@ class SMCN(nn.Module):
             I_flat[k] = cls.resample(I[k + 1], I_flat[k + 1])
 
         # Stack all selected particles
-        return torch.stack(
-            [cls.resample(x_i, I_i) for x_i, I_i in zip(x, I_flat)]
-        )
+        return torch.stack([cls.resample(x_i, I_i) for x_i, I_i in zip(x, I_flat)])
 
     def compute_cost(self, u, y):
         # Filter with observations
@@ -113,10 +110,10 @@ class SMCN(nn.Module):
 
         # Compute likelihood
         normal_y = MultivariateNormal(y.unsqueeze(-2), scale_tril=self._sigma_y)
-        loss_y = - normal_y.log_prob(self._f(particules)) * self.w.detach()
+        loss_y = -normal_y.log_prob(self._f(particules)) * self.w.detach()
 
         normal_x = MultivariateNormal(particules[1:], scale_tril=self._sigma_x)
-        loss_x = - normal_x.log_prob(self._g(particules[:-1])) * self.w.detach()
+        loss_x = -normal_x.log_prob(self._g(particules[:-1])) * self.w.detach()
 
         # Aggregate terms
         return loss_x.mean() + loss_y.mean()
