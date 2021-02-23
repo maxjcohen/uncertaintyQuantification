@@ -64,16 +64,12 @@ class SMCN(nn.Module):
             if noise:
                 x = x + self._eta.sample()
             self._particules.append(x)
-            if fisher:
-                x = x.detach()
 
             # Compute predictions
             y_hat = self._f(x)
             predictions.append(y_hat)
 
             if fisher:
-                y_hat = y_hat.detach()
-
                 # Compute sampling weights
                 self._normal_y = MultivariateNormal(y[k], scale_tril=self._sigma_y)
                 self.w = self._normal_y.log_prob(y_hat.transpose(0, 1)).T.detach()
