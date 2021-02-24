@@ -49,36 +49,41 @@ class SMCN(nn.Module):
 
         predictions = []
         self._particules = []
-        self._I = [torch.arange(self.N, device=u.device).expand(bs, self.N)]
+        self._I = []
 
         # Initial hidden state
         x = torch.randn(bs, self.N, self._input_size, device=u.device)
-
         self._eta = MultivariateNormal(torch.zeros(x.shape), scale_tril=self._sigma_x)
+
+        # Generat initial particules
+        x = self._g(x)
+        x = x + self._eta.sample()
+        self._particules.append(x)
+
+        # Compute weights
+        y_hat = self._f(x)
+        self._normal_y = MultivariateNormal(y[0], scale_tril=self._sigma_y)
+        self.w = self._normal_y.log_prob(y_hat.transpose(0, 1)).T.detach()
+        self.w = self.softmax(self.w)
+
         # Iterate k through time
-        for k, u_k in enumerate(u):
-            # Compute hidden state
-            x = self._g(x)
-
-            if noise:
-                x = x + self._eta.sample()
-            self._particules.append(x)
-
-            # Compute predictions
-            y_hat = self._f(x)
-            predictions.append(y_hat)
-
+        for k in range(1, T):
             if fisher:
-                # Compute sampling weights
-                self._normal_y = MultivariateNormal(y[k], scale_tril=self._sigma_y)
-                self.w = self._normal_y.log_prob(y_hat.transpose(0, 1)).T.detach()
-                self.w = self.softmax(self.w)
+                # Resample previous time step
                 I = torch.multinomial(self.w, self.N, replacement=True)
+                self._I.append(I)
                 x = self.__class__.resample(x, I)
 
-                self._I.append(I)
+            # Compute new hidden state
+            x = self._g(x)
+            x = x + self._eta.sample()
+            self._particules.append(x)
 
-        return torch.stack(predictions)
+            # Compute new weights
+            y_hat = self._f(x)
+            self._normal_y = MultivariateNormal(y[k], scale_tril=self._sigma_y)
+            self.w = self._normal_y.log_prob(y_hat.transpose(0, 1)).T.detach()
+            self.w = self.softmax(self.w)
 
     @staticmethod
     def resample(x, I):
@@ -86,20 +91,25 @@ class SMCN(nn.Module):
             [x[batch_idx, particule_idx] for batch_idx, particule_idx in enumerate(I)]
         ).view(x.shape)
 
-    @classmethod
-    def smooth_pms(cls, x, I):
-        T, N = I.shape[0], I.shape[-1]
+    # @classmethod
+    def smooth_pms(self, x, I):
+        N = I.shape[-1]
+        T = x.shape[0]
+        bs = x.shape[1]
 
         # Initialize flat indexing
-        I_flat = torch.zeros(I.shape, dtype=torch.long)
+        I_flat = torch.zeros((T, bs, N), dtype=torch.long)
         I_flat[-1] = torch.arange(N)
 
         # Fill flat indexing with reversed indexing
         for k in reversed(range(T - 1)):
-            I_flat[k] = cls.resample(I[k + 1], I_flat[k + 1])
+            I_flat[k] = self.__class__.resample(I[k], I_flat[k + 1])
 
+        self._I_flat = I_flat
         # Stack all selected particles
-        return torch.stack([cls.resample(x_i, I_i) for x_i, I_i in zip(x, I_flat)])
+        return torch.stack(
+            [self.__class__.resample(x_i, I_i) for x_i, I_i in zip(x, I_flat)]
+        )
 
     def compute_cost(self, u, y):
         # Filter with observations
@@ -128,7 +138,7 @@ class SMCN(nn.Module):
 
     @property
     def I(self):
-        return torch.stack(self._I[:-1])
+        return torch.stack(self._I)
 
     @property
     def particules(self):
