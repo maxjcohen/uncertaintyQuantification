@@ -52,7 +52,7 @@ class SMCN(nn.Module):
         self._I = []
 
         # Initial hidden state
-        x = torch.randn(bs, self.N, self._input_size, device=u.device)
+        x = torch.zeros(bs, self.N, self._input_size, device=u.device)
         self._eta = MultivariateNormal(torch.zeros(x.shape), scale_tril=self._sigma_x)
 
         # Generat initial particules
