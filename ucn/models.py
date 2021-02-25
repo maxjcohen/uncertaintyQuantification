@@ -62,9 +62,11 @@ class SMCN(nn.Module):
 
         # Compute weights
         y_hat = self._f(x)
-        self._normal_y = MultivariateNormal(y[0], scale_tril=self._sigma_y)
-        self.w = self._normal_y.log_prob(y_hat.transpose(0, 1)).T.detach()
-        self.w = self.softmax(self.w)
+        predictions.append(y_hat)
+        if fisher:
+            self._normal_y = MultivariateNormal(y[0], scale_tril=self._sigma_y)
+            self.w = self._normal_y.log_prob(y_hat.transpose(0, 1)).T.detach()
+            self.w = self.softmax(self.w)
 
         # Iterate k through time
         for k in range(1, T):
@@ -81,9 +83,12 @@ class SMCN(nn.Module):
 
             # Compute new weights
             y_hat = self._f(x)
-            self._normal_y = MultivariateNormal(y[k], scale_tril=self._sigma_y)
-            self.w = self._normal_y.log_prob(y_hat.transpose(0, 1)).T.detach()
-            self.w = self.softmax(self.w)
+            predictions.append(y_hat)
+            if fisher:
+                self._normal_y = MultivariateNormal(y[k], scale_tril=self._sigma_y)
+                self.w = self._normal_y.log_prob(y_hat.transpose(0, 1)).T.detach()
+                self.w = self.softmax(self.w)
+        return torch.stack(predictions)
 
     @staticmethod
     def resample(x, I):
