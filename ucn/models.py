@@ -126,9 +126,11 @@ class SMCN(nn.Module):
         # Compute likelihood
         normal_y = MultivariateNormal(y.unsqueeze(-2), scale_tril=self._sigma_y)
         loss_y = -normal_y.log_prob(self._f(particules)) * self.w.detach()
+        loss_y = loss_y.sum(-1)
 
         normal_x = MultivariateNormal(particules[1:], scale_tril=self._sigma_x)
         loss_x = -normal_x.log_prob(self._g(particules[:-1])) * self.w.detach()
+        loss_x = loss_x.sum(-1)
 
         # Aggregate terms
         return loss_x.mean() + loss_y.mean()
