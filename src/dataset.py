@@ -19,3 +19,14 @@ class ARMADataset(Dataset):
 
     def __len__(self):
         return len(self._y)
+
+class ARMAInitDataset(Dataset):
+    def __init__(self, y, u):
+        self._y = torch.Tensor(y).unsqueeze(-1)
+        self._u = torch.Tensor(u).unsqueeze(-1)
+
+    def __getitem__(self, idx):
+        return (self._u[idx], self._y[idx])
+
+    def __len__(self):
+        return len(self._y)
