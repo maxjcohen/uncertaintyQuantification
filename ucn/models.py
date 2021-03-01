@@ -33,8 +33,7 @@ class SMCN(nn.Module):
             torch.log(torch.diag(torch.rand(self._input_size))), requires_grad=True
         )
         self._sigma_y = nn.Parameter(
-            torch.log(torch.diag(torch.rand(self._output_size))),
-            requires_grad=True,
+            torch.log(torch.diag(torch.rand(self._output_size))), requires_grad=True
         )
 
         self.softmax = nn.Softmax(dim=1)
@@ -61,7 +60,9 @@ class SMCN(nn.Module):
 
         # Initial hidden state
         x = torch.zeros(bs, self.N, self._input_size, device=u.device)
-        self._eta = MultivariateNormal(torch.zeros(x.shape), covariance_matrix=self.sigma_x)
+        self._eta = MultivariateNormal(
+            torch.zeros(x.shape), covariance_matrix=self.sigma_x
+        )
 
         # Generat initial particules
         x = self._g(x)
@@ -93,7 +94,9 @@ class SMCN(nn.Module):
             y_hat = self._f(x)
             predictions.append(y_hat)
             if fisher:
-                self._normal_y = MultivariateNormal(y[k], covariance_matrix=self.sigma_y)
+                self._normal_y = MultivariateNormal(
+                    y[k], covariance_matrix=self.sigma_y
+                )
                 self.w = self._normal_y.log_prob(y_hat.transpose(0, 1)).T.detach()
                 self.w = self.softmax(self.w)
         return torch.stack(predictions)
