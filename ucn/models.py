@@ -58,15 +58,9 @@ class SMCN(nn.Module):
         self._particules = []
         self._I = []
 
-        # Initial hidden state
-        x = torch.zeros(bs, self.N, self._input_size, device=u.device)
-        self._eta = MultivariateNormal(
-            torch.zeros(x.shape), covariance_matrix=self.sigma_x
-        )
-
         # Generat initial particules
-        x = self._g(x)
-        x = x + self._eta.sample()
+        x = torch.zeros(bs, self.N, self._input_size, device=u.device)
+        x = x + torch.randn(size=x.shape) * self.sigma_x.sqrt()
         self._particules.append(x)
 
         # Compute weights
@@ -87,8 +81,8 @@ class SMCN(nn.Module):
 
             # Compute new hidden state
             x = self._g(x)
-            x = x + self._eta.sample()
-            self._particules.append(x)
+            x = x + torch.randn(size=x.shape) * self.sigma_x.sqrt()
+            self._particules.append(torch.Tensor(x))
 
             # Compute new weights
             y_hat = self._f(x)
