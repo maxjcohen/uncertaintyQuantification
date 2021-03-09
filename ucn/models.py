@@ -68,7 +68,7 @@ class SMCN(nn.Module):
         predictions.append(y_hat)
         if fisher:
             self._normal_y = MultivariateNormal(y[0], covariance_matrix=self.sigma_y)
-            self.w = self._normal_y.log_prob(y_hat.transpose(0, 1)).T.detach()
+            self.w = self._normal_y.log_prob(y_hat.transpose(0, 1)).T
             self.w = self.softmax(self.w)
 
         # Iterate k through time
@@ -91,7 +91,7 @@ class SMCN(nn.Module):
                 self._normal_y = MultivariateNormal(
                     y[k], covariance_matrix=self.sigma_y
                 )
-                self.w = self._normal_y.log_prob(y_hat.transpose(0, 1)).T.detach()
+                self.w = self._normal_y.log_prob(y_hat.transpose(0, 1)).T
                 self.w = self.softmax(self.w)
         return torch.stack(predictions)
 
