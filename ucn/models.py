@@ -122,9 +122,6 @@ class SMCN(nn.Module):
         )
 
     def compute_cost(self, u, y):
-        # Filter with observations
-        self(u, y=y, noise=True)
-
         # Smooth
         particules = self.smooth_pms(self.particules, self.I).detach()
 

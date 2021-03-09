@@ -19,6 +19,7 @@ class SMCNTrainer(pl.LightningModule):
         fisher = self._model.N > 1
 
         if fisher:
+            self._model(u=u, y=y, noise=True)
             loss = self._model.compute_cost(u=u, y=y)
         else:
             y_hat = self._model(u, noise=True)
