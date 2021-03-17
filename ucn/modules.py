@@ -29,3 +29,37 @@ class FFN(nn.Module):
 
     def forward(self, x):
         return self._linear(x)
+class ParticulesRNNCell(nn.RNNCell):
+
+    """Docstring for RNN. """
+
+    def __init__(self, input_size, hidden_size, **kwargs):
+        """TODO: to be defined.
+
+        Parameters
+        ----------
+        input_size : TODO
+        hidden_size : TODO
+        **kwargs : TODO
+
+
+        """
+        nn.RNNCell.__init__(
+            self, input_size=input_size, hidden_size=hidden_size, **kwargs
+        )
+
+        self._input_size = input_size
+        self._hidden_size = hidden_size
+
+    def forward(self, input_vector, hidden_vector):
+        input_vector = (
+            input_vector.unsqueeze(-2)
+            .expand(hidden_vector.shape)
+            .reshape(-1, self._input_size)
+        )
+
+        return (
+            super()
+            .forward(input_vector, hidden_vector.view(-1, self._input_size))
+            .view(hidden_vector.shape)
+        )

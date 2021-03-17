@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 from torch.distributions.multivariate_normal import MultivariateNormal
 
-from .modules import FFN
+from .modules import FFN, ParticulesRNNCell
 
 
 class SMCN(nn.Module):
@@ -27,7 +27,7 @@ class SMCN(nn.Module):
         self._n_particles = n_particles
 
         self._f = FFN(self._input_size, self._output_size)
-        self._g = FFN(self._input_size, self._input_size)
+        self._g = ParticulesRNNCell(self._input_size, self._input_size)
 
         self._sigma_x = nn.Parameter(
             torch.log(torch.diag(torch.rand(self._input_size))), requires_grad=True
@@ -80,7 +80,7 @@ class SMCN(nn.Module):
                 x = self.__class__.resample(x, I)
 
             # Compute new hidden state
-            x = self._g(x)
+            x = self._g(u[k], x)
             x = x + torch.randn(size=x.shape) * self.sigma_x.sqrt()
             self._particules.append(torch.Tensor(x))
 
@@ -131,7 +131,7 @@ class SMCN(nn.Module):
         loss_y = loss_y.sum(-1)
 
         normal_x = MultivariateNormal(particules[1:], covariance_matrix=self.sigma_x)
-        loss_x = -normal_x.log_prob(self._g(particules[:-1])) * self.w.detach()
+        loss_x = -normal_x.log_prob(self._g(u[:-1], particules[:-1])) * self.w.detach()
         loss_x = loss_x.sum(-1)
 
         # Aggregate terms
