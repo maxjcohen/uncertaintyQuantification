@@ -9,7 +9,7 @@ class SMCN(nn.Module):
 
     """Sequential Monte Carlo Network."""
 
-    def __init__(self, input_size, output_size, n_particles=1):
+    def __init__(self, input_size, latent_size, output_size, n_particles=1):
         """TODO: to be defined.
 
         Parameters
@@ -23,14 +23,16 @@ class SMCN(nn.Module):
         nn.Module.__init__(self)
 
         self._input_size = input_size
+        self._latent_size = latent_size
         self._output_size = output_size
         self._n_particles = n_particles
 
-        self._f = FFN(self._input_size, self._output_size)
-        self._g = ParticulesRNNCell(self._input_size, self._input_size)
+        self._f = FFN(self._latent_size, self._output_size)
+        self._g = ParticulesRNNCell(self._input_size, self._latent_size)
+        self._input_model = nn.GRU(self._input_size, self._input_size, num_layers=3)
 
         self._sigma_x = nn.Parameter(
-            torch.log(torch.diag(torch.rand(self._input_size))), requires_grad=True
+            torch.log(torch.diag(torch.rand(self._latent_size))), requires_grad=True
         )
         self._sigma_y = nn.Parameter(
             torch.log(torch.diag(torch.rand(self._output_size))), requires_grad=True
@@ -58,8 +60,8 @@ class SMCN(nn.Module):
         self._particules = []
         self._I = []
 
-        # Generat initial particules
-        x = torch.zeros(bs, self.N, self._input_size, device=u.device)
+        u = self._input_model(u)[0]
+
         x = x + torch.randn(size=x.shape) * self.sigma_x.sqrt()
         self._particules.append(x)
 

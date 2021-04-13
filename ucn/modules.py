@@ -52,14 +52,11 @@ class ParticulesRNNCell(nn.RNNCell):
         self._hidden_size = hidden_size
 
     def forward(self, input_vector, hidden_vector):
-        input_vector = (
-            input_vector.unsqueeze(-2)
-            .expand(hidden_vector.shape)
-            .reshape(-1, self._input_size)
-        )
+        N = hidden_vector.shape[-2]
+        input_vector = input_vector.reshape(-1, self._input_size).repeat(N, 1)
 
         return (
             super()
-            .forward(input_vector, hidden_vector.view(-1, self._input_size))
+            .forward(input_vector, hidden_vector.view(-1, self._hidden_size))
             .view(hidden_vector.shape)
         )
