@@ -66,16 +66,20 @@ class SMCN(nn.Module):
         self._particules.append(x)
 
         # Compute weights
+        self._W = []
         y_hat = self._f(x)
         predictions.append(y_hat)
-        if fisher:
-            self._normal_y = MultivariateNormal(y[0], covariance_matrix=self.sigma_y)
-            self.w = self._normal_y.log_prob(y_hat.transpose(0, 1)).T
-            self.w = self.softmax(self.w)
 
         # Iterate k through time
         for k in range(1, T):
             if fisher:
+                self._normal_y = MultivariateNormal(
+                    y[k-1], covariance_matrix=self.sigma_y
+                )
+                self.w = self._normal_y.log_prob(y_hat.transpose(0, 1)).T
+                self.w = self.softmax(self.w)
+                self._W.append(self.w)
+
                 # Resample previous time step
                 I = torch.multinomial(self.w, self.N, replacement=True)
                 self._I.append(I)
@@ -83,18 +87,20 @@ class SMCN(nn.Module):
 
             # Compute new hidden state
             x = self._g(u[k], x)
-            x = x + torch.randn(size=x.shape) * self.sigma_x.sqrt()
-            self._particules.append(torch.Tensor(x))
+            if noise:
+                x = x + self._eta.sample()
+                self._particules.append(torch.Tensor(x))
 
             # Compute new weights
             y_hat = self._f(x)
             predictions.append(y_hat)
-            if fisher:
-                self._normal_y = MultivariateNormal(
-                    y[k], covariance_matrix=self.sigma_y
-                )
-                self.w = self._normal_y.log_prob(y_hat.transpose(0, 1)).T
-                self.w = self.softmax(self.w)
+        if fisher:
+            self._normal_y = MultivariateNormal(
+                y[-1], covariance_matrix=self.sigma_y
+            )
+            self.w = self._normal_y.log_prob(y_hat.transpose(0, 1)).T
+            self.w = self.softmax(self.w)
+            self._W.append(self.w)
         return torch.stack(predictions)
 
     @staticmethod
@@ -150,6 +156,10 @@ class SMCN(nn.Module):
     @property
     def I(self):
         return torch.stack(self._I)
+
+    @property
+    def W(self):
+        return torch.stack(self._W)
 
     @property
     def particules(self):
