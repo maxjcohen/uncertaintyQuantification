@@ -1,3 +1,4 @@
+import torch
 import torch.nn as nn
 
 
@@ -20,15 +21,13 @@ class FFN(nn.Module):
         self._input_size = input_size
         self._ouput_size = ouput_size
 
-        self._linear = nn.Linear(self._input_size, self._ouput_size, bias=False)
-        self.activation = nn.Sigmoid()
-
-        # Initialize with positive values only
-        # TODO This is to be removed
-        self._linear.weight.data = self._linear.weight.data.abs()
+        self._linear = nn.Linear(self._input_size, self._ouput_size)
+        self.activation = torch.tanh
 
     def forward(self, x):
-        return self._linear(x)
+        return self.activation(self._linear(x))
+
+
 class ParticulesRNNCell(nn.RNNCell):
 
     """Docstring for RNN. """
