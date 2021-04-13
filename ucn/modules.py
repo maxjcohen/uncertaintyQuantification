@@ -43,9 +43,7 @@ class ParticulesRNNCell(nn.RNNCell):
 
 
         """
-        nn.RNNCell.__init__(
-            self, input_size=input_size, hidden_size=hidden_size, **kwargs
-        )
+        super().__init__(input_size=input_size, hidden_size=hidden_size, **kwargs)
 
         self._input_size = input_size
         self._hidden_size = hidden_size

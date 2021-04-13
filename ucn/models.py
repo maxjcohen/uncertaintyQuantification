@@ -74,7 +74,7 @@ class SMCN(nn.Module):
         for k in range(1, T):
             if fisher:
                 self._normal_y = MultivariateNormal(
-                    y[k-1], covariance_matrix=self.sigma_y
+                    y[k - 1], covariance_matrix=self.sigma_y
                 )
                 self.w = self._normal_y.log_prob(y_hat.transpose(0, 1)).T
                 self.w = self.softmax(self.w)
@@ -95,9 +95,7 @@ class SMCN(nn.Module):
             y_hat = self._f(x)
             predictions.append(y_hat)
         if fisher:
-            self._normal_y = MultivariateNormal(
-                y[-1], covariance_matrix=self.sigma_y
-            )
+            self._normal_y = MultivariateNormal(y[-1], covariance_matrix=self.sigma_y)
             self.w = self._normal_y.log_prob(y_hat.transpose(0, 1)).T
             self.w = self.softmax(self.w)
             self._W.append(self.w)
