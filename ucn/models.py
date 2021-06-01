@@ -41,11 +41,11 @@ class SMCN(nn.Module):
         self.softmax = nn.Softmax(dim=1)
 
     @property
-    def sigma_x(self):
+    def sigma_x2(self):
         return torch.exp(self._sigma_x)
 
     @property
-    def sigma_y(self):
+    def sigma_y2(self):
         return torch.exp(self._sigma_y)
 
     def forward(self, u, y=None, noise=False):
@@ -62,7 +62,7 @@ class SMCN(nn.Module):
 
         u = self._input_model(u)[0]
 
-        x = x + torch.randn(size=x.shape) * self.sigma_x.sqrt()
+        x = x + torch.randn(size=x.shape) * self.sigma_x2.sqrt()
         self._particules.append(x)
 
         # Compute weights
@@ -74,7 +74,7 @@ class SMCN(nn.Module):
         for k in range(1, T):
             if fisher:
                 self._normal_y = MultivariateNormal(
-                    y[k - 1], covariance_matrix=self.sigma_y
+                    y[k - 1], covariance_matrix=self.sigma_y2
                 )
                 self.w = self._normal_y.log_prob(y_hat.transpose(0, 1)).T
                 self.w = self.softmax(self.w)
@@ -95,7 +95,7 @@ class SMCN(nn.Module):
             y_hat = self._f(x)
             predictions.append(y_hat)
         if fisher:
-            self._normal_y = MultivariateNormal(y[-1], covariance_matrix=self.sigma_y)
+            self._normal_y = MultivariateNormal(y[-1], covariance_matrix=self.sigma_y2)
             self.w = self._normal_y.log_prob(y_hat.transpose(0, 1)).T
             self.w = self.softmax(self.w)
             self._W.append(self.w)
@@ -132,11 +132,11 @@ class SMCN(nn.Module):
         particules = self.smooth_pms(self.particules, self.I).detach()
 
         # Compute likelihood
-        normal_y = MultivariateNormal(y.unsqueeze(-2), covariance_matrix=self.sigma_y)
+        normal_y = MultivariateNormal(y.unsqueeze(-2), covariance_matrix=self.sigma_y2)
         loss_y = -normal_y.log_prob(self._f(particules)) * self.w.detach()
         loss_y = loss_y.sum(-1)
 
-        normal_x = MultivariateNormal(particules[1:], covariance_matrix=self.sigma_x)
+        normal_x = MultivariateNormal(particules[1:], covariance_matrix=self.sigma_x2)
         loss_x = -normal_x.log_prob(self._g(u[:-1], particules[:-1])) * self.w.detach()
         loss_x = loss_x.sum(-1)
 
