@@ -4,9 +4,10 @@ import pytorch_lightning as pl
 
 
 class SMCNTrainer(pl.LightningModule):
-    def __init__(self, model):
+    def __init__(self, model, lr=None):
         super().__init__()
         self._model = model
+        self.lr = lr or 2e-2
 
     def forward(self, x):
         return self._model.forward(x)
