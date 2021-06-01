@@ -62,8 +62,16 @@ class SMCN(nn.Module):
 
         u = self._input_model(u)[0]
 
-        x = x + torch.randn(size=x.shape) * self.sigma_x2.sqrt()
-        self._particules.append(x)
+        # Generate initial particles
+        x = torch.zeros(bs, self.N, self._latent_size, device=u.device)
+        self._eta = MultivariateNormal(
+            loc=torch.zeros(x.shape), covariance_matrix=self.sigma_x2
+        )
+
+        x = self._g(u[0], x)
+        if noise:
+            x = x + self._eta.sample()
+            self._particules.append(x)
 
         # Compute weights
         self._W = []
