@@ -2,3 +2,6 @@
 .env
 *.pyc
 *.ipynb_checkpoints
+
+# Datasets
+datasets
