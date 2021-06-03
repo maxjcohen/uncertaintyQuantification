@@ -33,3 +33,31 @@ def freq_filter(arr, alpha=0.99):
             yield current
 
     return np.array(list(gen_array(arr, alpha)))
+
+
+def uncertainty_estimation(model, dataloader):
+    accuracy = 0
+    for u, y in dataloader:
+        u = u.transpose(0, 1)
+        y = y.transpose(0, 1)
+
+        with torch.no_grad():
+            netout = model(u=u, y=y, noise=True)
+
+        netout = netout.squeeze()
+        y = y.squeeze()
+        netout.shape
+
+        mean = netout * model.W
+        mean = mean.sum(-1)
+        mean.shape
+
+        std = netout.square() * model.W
+        std = std.sum(-1)
+        std = std + model.sigma_y2.detach() - mean.square()
+        std.shape
+
+        comparison = ((mean - 3 * std) < y) & (y < (mean + 3 * std))
+
+        accuracy += comparison.to(dtype=float).mean()
+    return accuracy / len(dataloader)
