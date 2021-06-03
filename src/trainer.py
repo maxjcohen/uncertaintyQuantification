@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 import torch.nn.functional as F
 import pytorch_lightning as pl
@@ -8,6 +9,11 @@ class SMCNTrainer(pl.LightningModule):
         super().__init__()
         self._model = model
         self.lr = lr or 2e-2
+        self._hist = {
+            "loss": []
+        }
+        for param_name in self._model.state_dict().keys():
+            self._hist[param_name] = []
 
     def forward(self, x):
         return self._model.forward(x)
@@ -19,6 +25,8 @@ class SMCNTrainer(pl.LightningModule):
 
         fisher = self._model.N > 1
 
+        for param_name, param in self._model.state_dict().items():
+            self._hist[param_name].append(np.array(param.detach().cpu().squeeze()))
         if fisher:
             self._model(u=u, y=y, noise=True)
             loss = self._model.compute_cost(u=u, y=y)
@@ -26,7 +34,9 @@ class SMCNTrainer(pl.LightningModule):
             y_hat = self._model(u, noise=True)
             loss = F.mse_loss(y.squeeze(), y_hat.squeeze())
 
+        # Log
         self.log("train_loss", loss, on_step=False, on_epoch=True)
+        self._hist['loss'].append(loss.item())
         return loss
 
     def configure_optimizers(self):
