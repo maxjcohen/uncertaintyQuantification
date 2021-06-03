@@ -32,7 +32,7 @@ class SMCN(nn.Module):
         self._input_model = nn.GRU(self._input_size, self._input_size, num_layers=3)
 
         self._sigma_x = nn.Parameter(
-            torch.log(torch.diag(torch.rand(self._latent_size))), requires_grad=True
+            torch.diag(torch.rand(self._latent_size)), requires_grad=True
         )
         self._sigma_y = nn.Parameter(
             torch.log(torch.diag(torch.rand(self._output_size))), requires_grad=True
@@ -42,7 +42,7 @@ class SMCN(nn.Module):
 
     @property
     def sigma_x2(self):
-        return torch.exp(self._sigma_x)
+        return self._sigma_x
 
     @property
     def sigma_y2(self):
@@ -150,6 +150,32 @@ class SMCN(nn.Module):
 
         # Aggregate terms
         return loss_x.mean() + loss_y.mean()
+
+    def compute_sigma_x(self, u):
+        # Smooth
+        particules = self.smooth_pms(self.particules, self.I).detach()
+
+        sigma_x2 = particules[1:] - self._g(u[:-1], particules[:-1])
+
+        # Compute square
+        # sigma_x2 = sigma_x2.square()
+        sigma_x2 = sigma_x2.unsqueeze(-1)
+        sigma_x2 = torch.matmul(sigma_x2, sigma_x2.transpose(-1, -2))
+
+        # Sum on time steps
+        sigma_x2 = sigma_x2.mean(0)
+
+        # Sum on particules
+        sigma_x2 = sigma_x2 * self.w.unsqueeze(-1).unsqueeze(-1).detach()
+        sigma_x2 = sigma_x2.sum(axis=1)
+
+        # Average on batches
+        sigma_x2 = sigma_x2.mean(0)
+
+        # print(sigma_x2.det())
+
+        # self._sigma_x.data = sigma_x2
+        return sigma_x2
 
     @property
     def N(self):
