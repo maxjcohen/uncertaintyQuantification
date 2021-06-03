@@ -60,8 +60,6 @@ class SMCN(nn.Module):
         self._particules = []
         self._I = []
 
-        u = self._input_model(u)[0]
-
         # Generate initial particles
         x = torch.zeros(bs, self.N, self._latent_size, device=u.device)
         self._eta = MultivariateNormal(
