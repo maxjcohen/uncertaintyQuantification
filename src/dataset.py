@@ -9,9 +9,6 @@ class ChunkDataset(Dataset):
     def __init__(self, y, u):
         super().__init__()
 
-        y = self.normalize(y)
-        u = self.normalize(u)
-
         self._y = torch.Tensor(y)
         self._u = torch.Tensor(u)
 
