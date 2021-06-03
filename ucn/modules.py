@@ -25,7 +25,7 @@ class FFN(nn.Module):
         self.activation = torch.tanh
 
     def forward(self, x):
-        return self.activation(self._linear(x))
+        return self._linear(x)
 
 
 class ParticulesRNNCell(nn.RNNCell):
