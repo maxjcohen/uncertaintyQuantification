@@ -16,7 +16,7 @@ class ChunkDataset(Dataset):
         self._u = torch.Tensor(u)
 
     def normalize(self, array):
-        return (array - array.mean(axis=0)) / (array.max(axis=0) - array.min(axis=0))
+        return (array - array.mean()) / (array.max() - array.min())
 
     def __getitem__(self, idx):
         return (self._u[idx], self._y[idx])
