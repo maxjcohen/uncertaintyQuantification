@@ -31,7 +31,7 @@ class SMCNTrainer(pl.LightningModule):
             self._model(u=u, y=y, noise=True)
             loss = self._model.compute_cost(u=u, y=y)
         else:
-            y_hat = self._model(u, noise=True)
+            y_hat = self._model(u, noise=False)
             loss = F.mse_loss(y.squeeze(), y_hat.squeeze())
 
         # Log
