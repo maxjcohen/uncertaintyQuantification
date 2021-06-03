@@ -35,7 +35,7 @@ class SMCN(nn.Module):
             torch.diag(torch.rand(self._latent_size)), requires_grad=True
         )
         self._sigma_y = nn.Parameter(
-            torch.log(torch.diag(torch.rand(self._output_size))), requires_grad=True
+            torch.diag(torch.abs(torch.rand(self._output_size))), requires_grad=True
         )
 
         self.softmax = nn.Softmax(dim=1)
@@ -46,7 +46,7 @@ class SMCN(nn.Module):
 
     @property
     def sigma_y2(self):
-        return torch.exp(self._sigma_y)
+        return self._sigma_y
 
     def forward(self, u, y=None, noise=False):
         # N should be 1 if there is no noise
