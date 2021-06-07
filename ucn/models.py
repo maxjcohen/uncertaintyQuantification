@@ -79,11 +79,7 @@ class SMCN(nn.Module):
         # Iterate k through time
         for k in range(1, T):
             if fisher:
-                self._normal_y = MultivariateNormal(
-                    y[k - 1], covariance_matrix=self.sigma_y2
-                )
-                self.w = self._normal_y.log_prob(y_hat.transpose(0, 1)).T
-                self.w = self.softmax(self.w)
+                self.w = self.compute_weights(y[k-1], predictions[k-1].transpose(0, 1))
                 self._W.append(self.w)
 
                 # Select sampled indices from previous time step
@@ -101,11 +97,17 @@ class SMCN(nn.Module):
             y_hat = self._f(x)
             predictions.append(y_hat)
         if fisher:
-            self._normal_y = MultivariateNormal(y[-1], covariance_matrix=self.sigma_y2)
-            self.w = self._normal_y.log_prob(y_hat.transpose(0, 1)).T
-            self.w = self.softmax(self.w)
+            self.w = self.compute_weights(y[-1], predictions[-1].transpose(0, 1))
             self._W.append(self.w)
         return torch.stack(predictions)
+
+    def compute_weights(self, y, y_hat):
+        _normal_y = MultivariateNormal(
+            y, covariance_matrix=self.sigma_y2
+        )
+        w = _normal_y.log_prob(y_hat).T
+        w = self.softmax(w)
+        return w
 
     @staticmethod
     def select_indices(x, I):
