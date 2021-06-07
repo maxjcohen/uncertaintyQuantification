@@ -86,10 +86,10 @@ class SMCN(nn.Module):
                 self.w = self.softmax(self.w)
                 self._W.append(self.w)
 
-                # Resample previous time step
+                # Select sampled indices from previous time step
                 I = torch.multinomial(self.w, self.N, replacement=True)
                 self._I.append(I)
-                x = self.__class__.resample(x, I)
+                x = self.__class__.select_indices(x, I)
 
             # Compute new hidden state
             x = self._g(u[k], x)
@@ -108,7 +108,7 @@ class SMCN(nn.Module):
         return torch.stack(predictions)
 
     @staticmethod
-    def resample(x, I):
+    def select_indices(x, I):
         return torch.cat(
             [x[batch_idx, particule_idx] for batch_idx, particule_idx in enumerate(I)]
         ).view(x.shape)
@@ -125,12 +125,12 @@ class SMCN(nn.Module):
 
         # Fill flat indexing with reversed indexing
         for k in reversed(range(T - 1)):
-            I_flat[k] = self.__class__.resample(I[k], I_flat[k + 1])
+            I_flat[k] = self.__class__.select_indices(I[k], I_flat[k + 1])
 
         self._I_flat = I_flat
         # Stack all selected particles
         return torch.stack(
-            [self.__class__.resample(x_i, I_i) for x_i, I_i in zip(x, I_flat)]
+            [self.__class__.select_indices(x_i, I_i) for x_i, I_i in zip(x, I_flat)]
         )
 
     def compute_cost(self, u, y):
