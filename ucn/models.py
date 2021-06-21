@@ -66,10 +66,7 @@ class SMCN(nn.Module):
             loc=torch.zeros(x.shape), covariance_matrix=self.sigma_x2
         )
 
-        x = self._g(u[0], x)
-        if noise:
-            x = x + self._eta.sample()
-            self._particules.append(x)
+        self._particules.append(x)
 
         # Compute weights
         self._W = []
