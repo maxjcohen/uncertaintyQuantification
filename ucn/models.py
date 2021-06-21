@@ -158,7 +158,6 @@ class SMCN(nn.Module):
         sigma_x2 = particules[1:] - self._g(u[:-1], particules[:-1])
 
         # Compute square
-        # sigma_x2 = sigma_x2.square()
         sigma_x2 = sigma_x2.unsqueeze(-1)
         sigma_x2 = torch.matmul(sigma_x2, sigma_x2.transpose(-1, -2))
 
@@ -171,10 +170,6 @@ class SMCN(nn.Module):
 
         # Average on batches
         sigma_x2 = sigma_x2.mean(0)
-
-        # print(sigma_x2.det())
-
-        # self._sigma_x.data = sigma_x2
         return sigma_x2
 
     @property
