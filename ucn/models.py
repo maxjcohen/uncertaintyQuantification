@@ -88,7 +88,7 @@ class SMCN(nn.Module):
             x = self._g(u[k], x)
             if noise:
                 x = x + self._eta.sample()
-                self._particules.append(torch.Tensor(x))
+            self._particules.append(x)
 
             # Compute new weights
             y_hat = self._f(x)
