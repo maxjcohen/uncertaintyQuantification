@@ -14,7 +14,7 @@ class SMCNTrainer(pl.LightningModule):
         }
         for param_name in self._model.state_dict().keys():
             self._hist[param_name] = []
-        self.sigma_x2 = torch.zeros(2, 2)
+        self.sigma_x2 = torch.Tensor(model.sigma_x2)
 
     def forward(self, x):
         return self._model.forward(x)
