@@ -148,6 +148,27 @@ class SMCN(nn.Module):
         # Aggregate terms
         return loss_x.mean() + loss_y.mean()
 
+    def compute_sigma_y(self, u, y):
+        # Smooth
+        particules = self.smooth_pms(self.particules, self.I).detach()
+
+        sigma_y2 = y.unsqueeze(-1) - self._f(particules)
+
+        # Compute square
+        sigma_y2 = sigma_y2.square()
+
+        # Sum on time steps
+        sigma_y2 = sigma_y2.mean(0)
+
+        # Sum on particules
+        sigma_y2 = sigma_y2 * self.w.unsqueeze(-1).detach()
+        sigma_y2 = sigma_y2.sum(axis=1)
+
+        # Average on batches
+        sigma_y2 = sigma_y2.mean(0)
+
+        return sigma_y2
+
     def compute_sigma_x(self, u):
         # Smooth
         particules = self.smooth_pms(self.particules, self.I).detach()
