@@ -44,18 +44,12 @@ def uncertainty_estimation(model, dataloader):
         with torch.no_grad():
             netout = model(u=u, y=y, noise=True)
 
-        netout = netout.squeeze()
-        y = y.squeeze()
-        netout.shape
+        mean = netout * model.W.unsqueeze(-1)
+        mean = mean.sum(-2)
 
-        mean = netout * model.W
-        mean = mean.sum(-1)
-        mean.shape
-
-        std = netout.square() * model.W
-        std = std.sum(-1)
-        std = std + model.sigma_y2.detach() - mean.square()
-        std.shape
+        std = netout.square() * model.W.unsqueeze(-1)
+        std = std.sum(-2)
+        std = std + torch.diag(model.sigma_y2.detach()) - mean.square()
 
         comparison = ((mean - 3 * std) < y) & (y < (mean + 3 * std))
 
