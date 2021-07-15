@@ -22,7 +22,7 @@ def compute_cost(model, dataloader, loss_function=None):
             netout = model(u)
 
             running_loss += loss_function(netout.squeeze(), y.squeeze())
-    return running_loss / len(dataloader.dataset)
+    return running_loss / len(dataloader)
 
 
 def freq_filter(arr, alpha=0.99):
